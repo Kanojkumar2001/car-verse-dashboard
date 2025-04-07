@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Select, 
   SelectContent, 
@@ -15,6 +15,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group";
+import { useToast } from "@/hooks/use-toast";
 
 interface FilterBarProps {
   onFilterChange?: (filters: any) => void;
@@ -35,29 +36,35 @@ const FilterBar = ({
   const [transmission, setTransmission] = useState<string>("all");
   const [carType, setCarType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
+  
+  // Apply filters whenever any filter value changes
+  useEffect(() => {
+    applyFilters();
+  }, [priceRange, fuelType, transmission, carType]);
   
   const handlePriceChange = (value: number[]) => {
     setPriceRange(value);
-    applyFilters();
   };
   
   const handleFuelTypeChange = (value: string) => {
     setFuelType(value);
-    applyFilters();
   };
   
   const handleTransmissionChange = (value: string) => {
     setTransmission(value);
-    applyFilters();
   };
   
   const handleCarTypeChange = (value: string) => {
     setCarType(value);
-    applyFilters();
   };
   
   const handleSearch = () => {
     applyFilters();
+    toast({
+      title: "Filters Applied",
+      description: "Search results have been updated",
+    });
   };
   
   const resetFilters = () => {
@@ -66,7 +73,14 @@ const FilterBar = ({
     setTransmission("all");
     setCarType("all");
     setSearchQuery("");
-    applyFilters();
+    
+    // Apply the reset filters immediately
+    setTimeout(() => applyFilters(), 0);
+    
+    toast({
+      title: "Filters Reset",
+      description: "All filters have been reset to default values",
+    });
   };
   
   const applyFilters = () => {
@@ -93,7 +107,7 @@ const FilterBar = ({
   };
   
   return (
-    <div className="filter-container p-4">
+    <div className="filter-container p-4 z-20">
       <div className="flex items-center justify-between gap-4 mb-4">
         {showSearch && (
           <div className="relative flex-1">
@@ -113,8 +127,13 @@ const FilterBar = ({
             variant="outline"
             size="icon"
             onClick={() => setIsExpanded(!isExpanded)}
+            className="relative"
           >
             {isExpanded ? <X /> : <SlidersHorizontal />}
+            {(fuelType !== "all" || transmission !== "all" || carType !== "all" || 
+             priceRange[0] > 0 || priceRange[1] < 10000000) && 
+              <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full"></span>
+            }
           </Button>
           
           <Button 
@@ -205,6 +224,13 @@ const FilterBar = ({
               </SelectContent>
             </Select>
           </div>
+          
+          <Button 
+            onClick={handleSearch}
+            className="mt-2 md:col-span-2 lg:col-span-4"
+          >
+            Apply Filters
+          </Button>
         </div>
       )}
     </div>
